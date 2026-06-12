@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Мои оценки{% endblock %}
+
+{% block content %}
+<h1>Мои оценки</h1>
+
+<div class="card">
+    <h3>Средняя оценка: {{ scores.average|round(2) if scores.average else 0 }}</h3>
+</div>
+
+<div class="grid">
+    {% for score in scores.scores %}
+    <div class="card">
+        <p><strong>Задача #{{ score.task_id }}</strong></p>
+        <p>Оценка: 
+            {% for i in range(score.score) %} {% endfor %}
+            ({{ score.score }}/5)
+        </p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

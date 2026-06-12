@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Встречи{% endblock %}
+
+{% block content %}
+<h1>Мои встречи</h1>
+
+<div class="card">
+    <h3>Создать встречу</h3>
+    <form action="/create_meeting" method="post">
+        <input type="text" name="title" placeholder="Тема встречи" required>
+        <input type="datetime-local" name="datetime_str" required>
+        <button type="submit">Создать</button>
+    </form>
+</div>
+
+<div class="grid">
+    {% for meeting in meetings %}
+    <div class="card">
+        <h3>{{ meeting.title }}</h3>
+        <p><strong>Дата и время:</strong> {{ meeting.datetime }}</p>
+        <form action="/cancel_meeting" method="post">
+            <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+            <button type="submit">Отменить</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
