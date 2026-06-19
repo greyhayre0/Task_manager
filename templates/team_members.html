@@ -1,57 +1,54 @@
 {% extends "base.html" %}
-
 {% block title %}Команда{% endblock %}
-
 {% block content %}
-<h1>Управление командой</h1>
+  <h1>Управление командой</h1>
 
-{% if user.role.value == 'admin' %}
-<div class="card">
-    <h3>Создать новую команду</h3>
-    <form action="/create_team" method="post">
+  {% if user.role.value == 'admin' %}
+    <div class="card">
+      <h3>Создать новую команду</h3>
+      <form action="/create_team" method="post">
         <div style="margin-bottom: 10px;">
-            <input type="text" name="name" placeholder="Название команды" required style="width: 100%; padding: 8px;">
+          <input type="text" name="name" placeholder="Название команды" required style="width: 100%; padding: 8px;">
         </div>
         <div style="margin-bottom: 10px;">
-            <input type="text" name="invite_code" placeholder="Инвайт код (6 символов, необязательно)" 
-                   maxlength="6" minlength="6" pattern="[A-Za-z0-9]{6}" 
-                   style="width: 100%; padding: 8px;">
-            <small style="color: #666;">Оставьте пустым для автоматической генерации</small>
+          <input type="text" name="invite_code" placeholder="Инвайт код (6 символов, необязательно)" maxlength="6" minlength="6" pattern="[A-Za-z0-9]{6}" style="width: 100%; padding: 8px;">
+          <small style="color: #666;">Оставьте пустым для автоматической генерации</small>
         </div>
         <button type="submit">Создать команду</button>
-    </form>
-</div>
-{% endif %}
+      </form>
+    </div>
+  {% endif %}
 
-{% if has_team %}
+  {% if has_team %}
     <div class="card">
-        <h2>Команда: {{ team_name }}</h2>
-        {% if user.team %}
+      <h2>Команда: {{ team_name }}</h2>
+      {% if user.team %}
         <p>Код для приглашения: <strong>{{ user.team.invite_code }}</strong></p>
-        {% endif %}
+      {% endif %}
     </div>
 
     <div class="grid">
-        {% for member in members %}
+      {% for member in members %}
         <div class="card">
-            <h3>{{ member.email }}</h3>
-            <p><strong>Роль:</strong> {{ member.role }}</p>
-            <p><strong>ID:</strong> {{ member.id }}</p>
-            {% if user.role.value == 'admin' or (user.role.value == 'manager' and member.id != user.id) %}
+          <h3>{{ member.email }}</h3>
+          <p><strong>Роль:</strong> {{ member.role.value }}</p>
+          <p><strong>ID:</strong> {{ member.id }}</p>
+          {% if user.role.value == 'admin' or (user.role.value == 'manager' and member.id != user.id) %}
             <form action="/remove_user_team" method="post">
-                <input type="hidden" name="user_id" value="{{ member.id }}">
-                <button type="submit" onclick="return confirm('Выгнать {{ member.email }} из команды?')" class="danger-btn">
-                    Выгнать из команды
-                </button>
+              <input type="hidden" name="user_id" value="{{ member.id }}">
+              <button type="submit" onclick="return confirm('Выгнать {{ member.email }} из команды?')" class="danger-btn">
+                Выгнать из команды
+              </button>
             </form>
-            {% endif %}
+          {% endif %}
         </div>
-        {% endfor %}
+      {% endfor %}
     </div>
-{% else %}
+
+  {% else %}
     <div class="card">
-        <p>Вы не состоите в команде</p>
-        <p>Используйте код приглашения на странице <a href="/profile">профиля</a>, чтобы присоединиться к команде</p>
+      <p>Вы не состоите в команде</p>
+      <p>Используйте код приглашения на странице <a href="/profile">профиля</a>, чтобы присоединиться к команде</p>
     </div>
-{% endif %}
+  {% endif %}
 {% endblock %}

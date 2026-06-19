@@ -2,16 +2,13 @@ import logging
 from typing import Union
 import bcrypt
 from fastapi import Depends, Request
-from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models import User
 from app.services.evaluation_service import EvaluationService
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Проверяет пароль"""
@@ -24,7 +21,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         )
     except Exception:
         return False
-
 
 def create_session_cookie(user_id: int) -> dict:
     """Создаёт безопасные настройки для сессии"""

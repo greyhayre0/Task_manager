@@ -4,15 +4,12 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from wtforms.validators import Optional as WTFOptional, DataRequired, ValidationError
 from datetime import datetime
-
 from app.database import SessionLocal, engine
 from app.models import User, Team, TaskStatus, Task, UserRole
 from app.core.security import verify_password
 from app.core.config import settings
 
-
 class AdminAuth(AuthenticationBackend):
-    
     async def login(self, request: Request) -> bool:
         form = await request.form()
         username, password = form["username"], form["password"]
@@ -37,18 +34,15 @@ class AdminAuth(AuthenticationBackend):
         db.close()
         return bool(user)
 
-
 def validate_password(form, field):
     password = field.data
     if password and len(password) < 8:
         raise ValidationError("Пароль должен содержать минимум 8 символов")
 
-
 def validate_invite_code(form, field):
     code = field.data
     if code and len(code) != 6:
         raise ValidationError("Инвайт код должен содержать ровно 6 символов")
-
 
 def setup_admin(app):
     auth_backend = AdminAuth(secret_key=settings.SECRET_KEY)
@@ -59,28 +53,25 @@ def setup_admin(app):
         column_details_list = [User.id, User.email, User.role, User.team]
         column_searchable_list = [User.email]
         column_sortable_list = [User.id, User.email, User.role]
-
         form_columns = [User.email, User.password, User.role, User.team]
         form_args = {
             "email": {
-                "label": "Email", 
+                "label": "Email",
                 "validators": [DataRequired(message="Email обязателен")]
             },
             "password": {
-                "label": "Пароль (мин. 8 символов)", 
+                "label": "Пароль (мин. 8 символов)",
                 "validators": [WTFOptional(), validate_password]
             },
             "role": {"label": "Роль"},
             "team": {"label": "Команда"}
         }
         name, name_plural, icon = "Пользователь", "Пользователи", "fa-solid fa-user"
-        
+
         async def on_model_change(self, data, model, is_created, request):
             password = data.get("password")
-            
             if is_created and not password:
                 raise ValueError("Пароль обязателен при создании пользователя!")
-            
             return data
 
     class TeamAdmin(ModelView, model=Team):
@@ -98,7 +89,7 @@ def setup_admin(app):
             }
         }
         name, name_plural, icon = "Команда", "Команды", "fa-solid fa-users"
-        
+
         async def on_model_change(self, data, model, is_created, request):
             if not data.get("name"):
                 raise ValueError("Название команды не может быть пустым")
@@ -114,13 +105,11 @@ def setup_admin(app):
         column_searchable_list = [Task.title]
         column_sortable_list = [Task.id, Task.deadline]
         form_columns = [Task.title, Task.description, Task.deadline, Task.team, Task.assignee, Task.status_obj]
-        
         column_labels = {
             "status_obj": "Статус",
             "created_by": "Создатель",
             "assigned_to": "Исполнитель"
         }
-        
         form_args = {
             "title": {
                 "label": "Название задачи",
@@ -139,7 +128,7 @@ def setup_admin(app):
             "status_obj": {"label": "Статус"}
         }
         name, name_plural, icon = "Задача", "Задачи", "fa-solid fa-list-check"
-        
+
         async def on_model_change(self, data, model, is_created, request):
             if not data.get("title"):
                 raise ValueError("Название задачи обязательно")
@@ -149,17 +138,14 @@ def setup_admin(app):
                 raise ValueError("Дедлайн обязателен")
             if not data.get("team"):
                 raise ValueError("Команда обязательна")
-            
             if model.deadline and model.deadline < datetime.now():
                 raise ValueError("Дедлайн не может быть в прошлом!")
-            
             if is_created:
                 db = SessionLocal()
                 if not data.get("status_obj"):
                     default_status = db.query(TaskStatus).filter(TaskStatus.code == "open").first()
                     if default_status:
                         model.status_id = default_status.id
-                
                 admin_user_id = request.session.get("admin_user_id")
                 if admin_user_id:
                     admin_user = db.query(User).filter(User.id == admin_user_id).first()

@@ -1,156 +1,149 @@
 {% extends "base.html" %}
-
 {% block title %}Задачи{% endblock %}
-
 {% block content %}
+  <h1>Управление задачами</h1>
 
-<h1>Управление задачами</h1>
-
-{% if user.role.value in ['admin', 'manager'] %}
-<div class="card">
-    <h3>Создать новую задачу</h3>
-    <form action="/create_task" method="post">
+  {% if user.role.value in ['admin', 'manager'] %}
+    <div class="card">
+      <h3>Создать новую задачу</h3>
+      <form action="/create_task" method="post">
         <input type="text" name="title" placeholder="Название задачи" required style="width: 100%; margin-bottom: 10px;">
         <textarea name="description" placeholder="Описание" style="width: 100%; min-height: 80px; margin-bottom: 10px;"></textarea>
-        
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-            <input type="datetime-local" name="deadline" placeholder="Дедлайн">
-            <select name="assigned_to">
-                <option value="">Назначить пользователя</option>
-                {% for member in team_members %}
-                <option value="{{ member.id }}">{{ member.email }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit">Создать задачу</button>
+          <input type="datetime-local" name="deadline" placeholder="Дедлайн">
+          <select name="assigned_to">
+            <option value="">Назначить пользователя</option>
+            {% for member in team_members %}
+              <option value="{{ member.id }}">{{ member.email }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Создать задачу</button>
         </div>
-    </form>
-</div>
-{% endif %}
+      </form>
+    </div>
+  {% endif %}
 
-{% for task in tasks %}
-<div class="card">
-    <form action="/update_task" method="post">
+  {% for task in tasks %}
+    <div class="card">
+      <form action="/update_task" method="post">
         <input type="hidden" name="task_id" value="{{ task.id }}">
-        
+
         {% if user.role.value in ['admin', 'manager'] %}
-            <input type="text" name="title" value="{{ task.title }}" required style="width: 100%; margin-bottom: 10px;">
-            <textarea name="description" style="width: 100%; min-height: 80px; margin-bottom: 10px;">{{ task.description or '' }}</textarea>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                    <strong>Исполнитель:</strong>
-                    <select name="assigned_to" style="width: 100%;">
-                        <option value="">Не назначен</option>
-                        {% for member in team_members %}
-                        <option value="{{ member.id }}" {% if task.assigned_to == member.id %}selected{% endif %}>
-                            {{ member.email }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <strong>Статус:</strong>
-                    <select name="status_id" style="width: 100%;">
-                        {% for status in statuses %}
-                        <option value="{{ status.id }}" {% if task.status_id == status.id %}selected{% endif %}>
-                            {{ status.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <strong>Дедлайн:</strong>
-                    <input type="datetime-local" name="deadline" 
-                           value="{{ task.deadline.strftime('%Y-%m-%dT%H:%M') if task.deadline else '' }}"
-                           style="width: 100%;">
-                </div>
+          <input type="text" name="title" value="{{ task.title }}" required style="width: 100%; margin-bottom: 10px;">
+          <textarea name="description" style="width: 100%; min-height: 80px; margin-bottom: 10px;">{{ task.description or '' }}</textarea>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <strong>Исполнитель:</strong>
+              <select name="assigned_to" style="width: 100%;">
+                <option value="">Не назначен</option>
+                {% for member in team_members %}
+                  <option value="{{ member.id }}" {% if task.assigned_to == member.id %}selected{% endif %}>
+                    {{ member.email }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
-            
-            <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
-                <button type="submit">Сохранить</button>
-                <button type="button" onclick="if(confirm('Удалить задачу?')) this.form.action='/delete_task'; this.form.submit();" 
-                        class="danger-btn">Удалить</button>
-                
-                <div style="flex: 1; text-align: right;">
-                    <select name="score" form="eval-{{ task.id }}" >
-                        <option value="1"> 1</option>
-                        <option value="2"> 2</option>
-                        <option value="3"> 3</option>
-                        <option value="4"> 4</option>
-                        <option value="5"> 5</option>
-                    </select>
-                    <button type="submit" form="eval-{{ task.id }}">Оценить</button>
-                </div>
+
+            <div>
+              <strong>Статус:</strong>
+              <select name="status_id" style="width: 100%;">
+                {% for status in statuses %}
+                  <option value="{{ status.id }}" {% if task.status_id == status.id %}selected{% endif %}>
+                    {{ status.name }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
-            
+
+            <div>
+              <strong>Дедлайн:</strong>
+              <input type="datetime-local" name="deadline"
+                     value="{{ task.deadline.strftime('%Y-%m-%dT%H:%M') if task.deadline else '' }}"
+                     style="width: 100%;">
+            </div>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="if(confirm('Удалить задачу?')) this.form.action='/delete_task'; this.form.submit();" class="danger-btn">Удалить</button>
+            <div style="flex: 1; text-align: right;">
+              <select name="score" form="eval-{{ task.id }}">
+                <option value="1"> 1</option>
+                <option value="2"> 2</option>
+                <option value="3"> 3</option>
+                <option value="4"> 4</option>
+                <option value="5"> 5</option>
+              </select>
+              <button type="submit" form="eval-{{ task.id }}">Оценить</button>
+            </div>
+          </div>
+
         {% else %}
-            <h3>{{ task.title }}</h3>
-            <p><strong>Описание:</strong> {{ task.description or 'Нет описания' }}</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                    <strong>Исполнитель:</strong><br>
-                    {% if task.assignee %}
-                        {{ task.assignee.email }}
-                    {% else %}
-                        Не назначен
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <strong>Статус:</strong>
-                    <select name="status_id" style="width: 100%;">
-                        {% for status in statuses %}
-                        <option value="{{ status.id }}" {% if task.status_id == status.id %}selected{% endif %}>
-                            {{ status.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <strong>Дедлайн:</strong><br>
-                    {{ task.deadline.strftime('%d.%m.%Y %H:%M') if task.deadline else 'Не указан' }}
-                </div>
+          <h3>{{ task.title }}</h3>
+          <p><strong>Описание:</strong> {{ task.description or 'Нет описания' }}</p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <strong>Исполнитель:</strong><br>
+              {% if task.assignee %}
+                {{ task.assignee.email }}
+              {% else %}
+                Не назначен
+              {% endif %}
             </div>
-            
-            <div style="margin-top: 15px;">
-                <button type="submit">Обновить статус</button>
+
+            <div>
+              <strong>Статус:</strong>
+              <select name="status_id" style="width: 100%;">
+                {% for status in statuses %}
+                  <option value="{{ status.id }}" {% if task.status_id == status.id %}selected{% endif %}>
+                    {{ status.name }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
+
+            <div>
+              <strong>Дедлайн:</strong><br>
+              {{ task.deadline.strftime('%d.%m.%Y %H:%M') if task.deadline else 'Не указан' }}
+            </div>
+          </div>
+
+          <div style="margin-top: 15px;">
+            <button type="submit">Обновить статус</button>
+          </div>
         {% endif %}
-    </form>
-    
-    {% if user.role.value in ['admin', 'manager'] %}
-    <form id="eval-{{ task.id }}" action="/evaluate_task" method="post">
-        <input type="hidden" name="task_id" value="{{ task.id }}">
-    </form>
-    {% endif %}
-    
-    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+      </form>
+
+      {% if user.role.value in ['admin', 'manager'] %}
+        <form id="eval-{{ task.id }}" action="/evaluate_task" method="post">
+          <input type="hidden" name="task_id" value="{{ task.id }}">
+        </form>
+      {% endif %}
+
+      <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
         <h4>Комментарии</h4>
-        
         {% for comment in task.comments %}
-        <div style="background: #f5f5f5; padding: 8px; margin-bottom: 8px; border-radius: 4px;">
+          <div style="background: #f5f5f5; padding: 8px; margin-bottom: 8px; border-radius: 4px;">
             <strong>Пользователь {{ comment.user_id }}:</strong> {{ comment.text }}
             <br><small style="color: #666;">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
-        </div>
+          </div>
         {% else %}
-        <p>Нет комментариев</p>
+          <p>Нет комментариев</p>
         {% endfor %}
-        
-        <form action="/add_comment" method="post" style="margin-top: 10px;">
-            <input type="hidden" name="task_id" value="{{ task.id }}">
-            <input type="text" name="text" placeholder="Ваш комментарий" required style="width: 70%;">
-            <button type="submit">Добавить</button>
-        </form>
-    </div>
-</div>
-{% else %}
-<div class="card">
-    <p>Нет задач</p>
-</div>
-{% endfor %}
 
+        <form action="/add_comment" method="post" style="margin-top: 10px;">
+          <input type="hidden" name="task_id" value="{{ task.id }}">
+          <input type="text" name="text" placeholder="Ваш комментарий" required style="width: 70%;">
+          <button type="submit">Добавить</button>
+        </form>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="card">
+      <p>Нет задач</p>
+    </div>
+  {% endfor %}
 {% endblock %}

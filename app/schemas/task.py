@@ -1,18 +1,15 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-
 
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = ""
 
-
 class TaskCreate(TaskBase):
     deadline: Optional[datetime] = None
     assigned_to: Optional[int] = None
     team_id: Optional[int] = None
-
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -21,7 +18,6 @@ class TaskUpdate(BaseModel):
     status_id: Optional[int] = None
     assigned_to: Optional[int] = None
 
-
 class TaskResponse(TaskBase):
     id: int
     status_id: Optional[int] = None
@@ -29,6 +25,6 @@ class TaskResponse(TaskBase):
     created_by: int
     assigned_to: Optional[int] = None
     team_id: Optional[int] = None
-    
+
     class Config:
         from_attributes = True
