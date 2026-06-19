@@ -1,10 +1,17 @@
-from sqlalchemy.orm import Session
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.exceptions import (
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
+)
 from app.models import Task, TaskStatus, User, UserRole
-from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
 from app.schemas.task import TaskCreate, TaskUpdate
+
 
 class TaskService:
     def __init__(self, db: Session):
@@ -31,7 +38,9 @@ class TaskService:
         default_status = self.get_default_status()
         team_id = None
         if task_data.assigned_to:
-            assignee = self.db.query(User).filter(User.id == task_data.assigned_to).first()
+            assignee = (
+                self.db.query(User).filter(User.id == task_data.assigned_to).first()
+            )
             if assignee:
                 team_id = assignee.team_id
         else:
@@ -39,12 +48,12 @@ class TaskService:
 
         task = Task(
             title=task_data.title,
-            description=task_data.description or '',
+            description=task_data.description or "",
             deadline=task_data.deadline,
             created_by=creator.id,
             assigned_to=task_data.assigned_to,
             team_id=team_id,
-            status_id=default_status.id if default_status else None
+            status_id=default_status.id if default_status else None,
         )
         self.db.add(task)
         try:
@@ -67,13 +76,17 @@ class TaskService:
             raise BadRequestException("Дедлайн не может быть в прошлом")
 
         if not is_manager and not is_creator:
-            if any([
-                task_data.title is not None,
-                task_data.description is not None,
-                task_data.deadline is not None,
-                task_data.assigned_to is not None
-            ]):
-                raise ForbiddenException("Исполнитель может менять только статус задачи")
+            if any(
+                [
+                    task_data.title is not None,
+                    task_data.description is not None,
+                    task_data.deadline is not None,
+                    task_data.assigned_to is not None,
+                ]
+            ):
+                raise ForbiddenException(
+                    "Исполнитель может менять только статус задачи"
+                )
 
         if task_data.title is not None and (is_manager or is_creator):
             task.title = task_data.title
@@ -82,7 +95,9 @@ class TaskService:
         if task_data.deadline is not None and (is_manager or is_creator):
             task.deadline = task_data.deadline
         if task_data.assigned_to is not None and (is_manager or is_creator):
-            assignee = self.db.query(User).filter(User.id == task_data.assigned_to).first()
+            assignee = (
+                self.db.query(User).filter(User.id == task_data.assigned_to).first()
+            )
             if assignee:
                 task.assigned_to = task_data.assigned_to
                 if assignee.team_id:

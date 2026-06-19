@@ -1,15 +1,18 @@
-from app.models import UserRole
-from fastapi import APIRouter, Depends, Form, HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse
-from sqlalchemy.orm import Session
 from datetime import datetime
 from urllib.parse import urlencode
+
+from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.dependencies import require_manager, get_current_user
+from app.dependencies import get_current_user, require_manager
+from app.models import UserRole
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.task_service import TaskService
 
 router = APIRouter()
+
 
 @router.post("/create_task")
 async def create_task(
@@ -18,14 +21,16 @@ async def create_task(
     deadline: str = Form(None),
     assigned_to: int = Form(None),
     db: Session = Depends(get_db),
-    user = Depends(require_manager)
+    user=Depends(require_manager),
 ):
     deadline_dt = None
     if deadline:
         try:
             deadline_dt = datetime.fromisoformat(deadline)
         except ValueError:
-            query_string = urlencode({"error": ["Неверный формат даты дедлайна"]}, doseq=True)
+            query_string = urlencode(
+                {"error": ["Неверный формат даты дедлайна"]}, doseq=True
+            )
             return RedirectResponse(url=f"/my_tasks?{query_string}", status_code=302)
 
     team_id = user.team_id if user.role == UserRole.MANAGER else None
@@ -34,7 +39,7 @@ async def create_task(
         description=description,
         deadline=deadline_dt,
         assigned_to=assigned_to,
-        team_id=team_id
+        team_id=team_id,
     )
     task_service = TaskService(db)
     try:
@@ -43,6 +48,7 @@ async def create_task(
         db.rollback()
         raise HTTPException(status_code=500, detail="Ошибка при создании задачи")
     return RedirectResponse(url="/my_tasks", status_code=302)
+
 
 @router.post("/update_task")
 async def update_task(
@@ -53,14 +59,16 @@ async def update_task(
     deadline: str = Form(None),
     assigned_to: int = Form(None),
     db: Session = Depends(get_db),
-    user = Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     deadline_dt = None
     if deadline:
         try:
             deadline_dt = datetime.fromisoformat(deadline)
         except ValueError:
-            query_string = urlencode({"error": ["Неверный формат даты дедлайна"]}, doseq=True)
+            query_string = urlencode(
+                {"error": ["Неверный формат даты дедлайна"]}, doseq=True
+            )
             return RedirectResponse(url=f"/my_tasks?{query_string}", status_code=302)
 
     task_data = TaskUpdate(
@@ -68,7 +76,7 @@ async def update_task(
         description=description,
         deadline=deadline_dt,
         status_id=status_id,
-        assigned_to=assigned_to
+        assigned_to=assigned_to,
     )
     task_service = TaskService(db)
     try:
@@ -78,11 +86,12 @@ async def update_task(
         raise HTTPException(status_code=500, detail="Ошибка при обновлении задачи")
     return RedirectResponse(url="/my_tasks", status_code=302)
 
+
 @router.post("/delete_task")
 async def delete_task(
     task_id: int = Form(...),
     db: Session = Depends(get_db),
-    user = Depends(require_manager)
+    user=Depends(require_manager),
 ):
     task_service = TaskService(db)
     try:

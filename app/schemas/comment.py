@@ -1,11 +1,15 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
+
 
 class CommentBase(BaseModel):
     text: str
 
+
 class CommentCreate(CommentBase):
     task_id: int
+
 
 class CommentResponse(CommentBase):
     id: int

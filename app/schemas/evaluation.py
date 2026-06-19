@@ -1,10 +1,13 @@
 from pydantic import BaseModel
 
+
 class EvaluationBase(BaseModel):
     score: int
 
+
 class EvaluationCreate(EvaluationBase):
     task_id: int
+
 
 class EvaluationResponse(EvaluationBase):
     id: int

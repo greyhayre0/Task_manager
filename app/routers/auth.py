@@ -1,20 +1,20 @@
-from fastapi import APIRouter, Depends, Request, Form, status, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.security import verify_password
 from app.database import get_db
 from app.models import User
 from app.schemas.user import UserCreate
-from app.core.security import create_session_cookie, verify_password
-from app.core.config import settings
 
 router = APIRouter()
 
+
 @router.post("/register")
 async def register(
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
+    email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)
 ):
     try:
         user_data = UserCreate(email=email, password=password)
@@ -25,7 +25,9 @@ async def register(
 
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email уже занят")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email уже занят"
+        )
 
     try:
         user = User(email=user_data.email, password=user_data.password)
@@ -34,25 +36,40 @@ async def register(
         db.refresh(user)
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ошибка при создании пользователя")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при создании пользователя",
+        )
 
     response = RedirectResponse(url="/profile", status_code=302)
-    response.set_cookie("user_id", str(user.id), httponly=True, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    response.set_cookie(
+        "user_id",
+        str(user.id),
+        httponly=True,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
     return response
+
 
 @router.post("/login")
 async def login(
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
+    email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный email или пароль")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный email или пароль"
+        )
 
     response = RedirectResponse(url="/profile", status_code=302)
-    response.set_cookie("user_id", str(user.id), httponly=True, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    response.set_cookie(
+        "user_id",
+        str(user.id),
+        httponly=True,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
     return response
+
 
 @router.get("/logout")
 async def logout():

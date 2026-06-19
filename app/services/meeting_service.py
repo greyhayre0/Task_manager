@@ -1,12 +1,19 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List
 from datetime import datetime, timedelta
+from typing import List
+
 from fastapi import HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
+from app.core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+)
 from app.models import Meeting, User
-from app.core.exceptions import BadRequestException, NotFoundException, ConflictException
 from app.schemas.meeting import MeetingCreate
+
 
 class MeetingService:
     def __init__(self, db: Session):
@@ -19,20 +26,26 @@ class MeetingService:
         return meeting
 
     def get_meetings(self, user_id: int) -> List[Meeting]:
-        return self.db.query(Meeting).filter(Meeting.user_id == user_id).order_by(Meeting.datetime).all()
+        return (
+            self.db.query(Meeting)
+            .filter(Meeting.user_id == user_id)
+            .order_by(Meeting.datetime)
+            .all()
+        )
 
     def check_meeting(
         self,
         user_id: int,
         meeting_dt: datetime,
         duration_minutes: int,
-        exclude_meeting_id: int = None
+        exclude_meeting_id: int = None,
     ) -> bool:
         end_dt = meeting_dt + timedelta(minutes=duration_minutes)
         query = self.db.query(Meeting).filter(
             Meeting.user_id == user_id,
             Meeting.datetime < end_dt,
-            func.datetime(Meeting.datetime, f'+{duration_minutes} minutes') > meeting_dt
+            func.datetime(Meeting.datetime, f"+{duration_minutes} minutes")
+            > meeting_dt,
         )
         if exclude_meeting_id:
             query = query.filter(Meeting.id != exclude_meeting_id)
@@ -53,7 +66,7 @@ class MeetingService:
             title=meeting_data.title,
             datetime=meeting_dt,
             user_id=user.id,
-            team_id=user.team_id
+            team_id=user.team_id,
         )
         self.db.add(meeting)
         try:

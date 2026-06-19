@@ -1,12 +1,20 @@
 import random
 import string
-from sqlalchemy.orm import Session
 from typing import List
+
 from fastapi import HTTPException
-from app.models import Team, User, UserRole
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException, ConflictException
+from app.core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    ForbiddenException,
+    NotFoundException,
+)
+from app.models import Team, User, UserRole
 from app.schemas.team import TeamCreate, TeamJoin
+
 
 class TeamService:
     def __init__(self, db: Session):
@@ -19,7 +27,9 @@ class TeamService:
         return team
 
     def get_team_by_invite_code(self, invite_code: str) -> Team:
-        team = self.db.query(Team).filter(Team.invite_code == invite_code.upper()).first()
+        team = (
+            self.db.query(Team).filter(Team.invite_code == invite_code.upper()).first()
+        )
         if not team:
             raise NotFoundException("Команда с таким кодом не найдена")
         return team
@@ -29,10 +39,12 @@ class TeamService:
 
     def generate_invite_code(self) -> str:
         while True:
-            code = ''.join(random.choices(
-                string.ascii_uppercase + string.digits,
-                k=settings.INVITE_CODE_LENGTH
-            ))
+            code = "".join(
+                random.choices(
+                    string.ascii_uppercase + string.digits,
+                    k=settings.INVITE_CODE_LENGTH,
+                )
+            )
             if not self.db.query(Team).filter(Team.invite_code == code).first():
                 return code
 
@@ -42,18 +54,19 @@ class TeamService:
 
         if team_data.invite_code:
             invite_code = team_data.invite_code.upper()
-            existing = self.db.query(Team).filter(Team.invite_code == invite_code).first()
+            existing = (
+                self.db.query(Team).filter(Team.invite_code == invite_code).first()
+            )
             if existing:
                 raise ConflictException("Команда с таким инвайт кодом уже существует")
             if len(invite_code) != settings.INVITE_CODE_LENGTH:
-                raise BadRequestException("Инвайт код должен содержать ровно 6 символов")
+                raise BadRequestException(
+                    "Инвайт код должен содержать ровно 6 символов"
+                )
         else:
             invite_code = self.generate_invite_code()
 
-        team = Team(
-            name=team_data.name,
-            invite_code=invite_code
-        )
+        team = Team(name=team_data.name, invite_code=invite_code)
         self.db.add(team)
         try:
             self.db.commit()
@@ -70,7 +83,9 @@ class TeamService:
             self.db.commit()
         except Exception:
             self.db.rollback()
-            raise HTTPException(status_code=500, detail="Ошибка при присоединении к команде")
+            raise HTTPException(
+                status_code=500, detail="Ошибка при присоединении к команде"
+            )
         return team
 
     def add_user_team(self, user_email: str, team_id: int, current_user: User) -> User:
@@ -84,7 +99,9 @@ class TeamService:
             self.db.commit()
         except Exception:
             self.db.rollback()
-            raise HTTPException(status_code=500, detail="Ошибка при добавлении пользователя в команду")
+            raise HTTPException(
+                status_code=500, detail="Ошибка при добавлении пользователя в команду"
+            )
         return user
 
     def remove_user_team(self, user_id: int, current_user: User) -> None:
@@ -97,4 +114,7 @@ class TeamService:
                 self.db.commit()
             except Exception:
                 self.db.rollback()
-                raise HTTPException(status_code=500, detail="Ошибка при удалении пользователя из команды")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Ошибка при удалении пользователя из команды",
+                )
