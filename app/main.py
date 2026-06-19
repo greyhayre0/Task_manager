@@ -38,7 +38,6 @@ app.include_router(tasks.router, tags=["Tasks"])
 app.include_router(comments.router, tags=["Comments"])
 app.include_router(evaluations.router, tags=["Evaluations"])
 app.include_router(meetings.router, tags=["Meetings"])
-# app.include_router(calendar.router, tags=["Calendar"])
 
 setup_admin(app)
 
