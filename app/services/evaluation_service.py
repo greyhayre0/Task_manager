@@ -44,7 +44,7 @@ class EvaluationService:
             score=eval_data.score
         )
         self.db.add(evaluation)
-
+        self.db.flush()
         self.update_user_average_score(task.assigned_to)
         try:
             self.db.commit()
